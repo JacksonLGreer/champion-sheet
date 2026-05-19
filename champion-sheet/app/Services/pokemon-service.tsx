@@ -113,7 +113,7 @@ export async function fetchPokemonFromAPIPokedex(pokedexNum: number) {
 }
 
 // This is a helper function I used to get the pokemon data from the API. Not needed anymore but keeping for reference
-export async function fetchPokemonFromAPIName(name: name) {
+export async function fetchPokemonFromAPIName(name: string) {
   const res = await fetch(
     `https://pokeapi.co/api/v2/pokemon/${name}`
   );
