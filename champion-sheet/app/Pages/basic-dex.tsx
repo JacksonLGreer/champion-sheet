@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { fetchPokemonFromAPI, Pokemon, getAllPokemon } from "../Services/pokemon-service";
+import { fetchPokemonFromAPIName, Pokemon, getAllPokemon } from "../Services/pokemon-service";
 import Stat from "../Components/Stat";
  
 
@@ -12,7 +12,7 @@ export default function basicdex() {
 
   useEffect(() => {
     getAllPokemon().then(setPokemon).catch(console.error);
-    fetchPokemonFromAPI(1).then(console.log).catch(console.error);
+    fetchPokemonFromAPIName("venusaur").then(console.log).catch(console.error);
 
   }, []);
   

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { fetchPokemonFromAPI, Pokemon, getAllPokemon } from "./Services/pokemon-service";
+import { fetchPokemonFromAPIName, Pokemon, getAllPokemon } from "./Services/pokemon-service";
 import Stat from "./Components/Stat";
 import GbaButton, { type GbaButtonItem } from "./Components/gbaButton";
 import { useRouter } from "next/navigation";
