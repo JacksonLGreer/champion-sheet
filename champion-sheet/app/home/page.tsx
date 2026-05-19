@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { fetchPokemonFromAPI, Pokemon, getAllPokemon } from "../Services/pokemon-service";
+import { fetchPokemonFromAPIName, Pokemon, getAllPokemon, seedPokemonData } from "../Services/pokemon-service";
 import Stat from "../Components/Stat";
 import GbaButton, { type GbaButtonItem } from "../Components/gbaButton";
-
+ 
 
 const menuItemsOG = [
   {
@@ -130,6 +130,25 @@ export default function Home() {
   const battle = menuItems[0];
   const grid = menuItems.slice(1);
   
+   
+  useEffect(() => {
+    async function loadPokemon() {
+      try {
+        const pokemon = await fetchPokemonFromAPIName("charizard-mega-x");
+
+        console.log(pokemon);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    loadPokemon();
+  }, []);
+
+   
+  
+  
+
   return (
     <div
       className="min-h-screen flex flex-col items-center px-4 py-8"

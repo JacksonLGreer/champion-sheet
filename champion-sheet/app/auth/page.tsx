@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createClient } from '../Services/supabase/supabase-client'
 import { useRouter } from "next/navigation";
 import router from "next/dist/shared/lib/router/router";
-
+import GbaButton from "../Components/gbaButton";
 type AuthMode = "login" | "signup";
  
 export default function AuthPage() {
