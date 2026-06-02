@@ -23,7 +23,7 @@ interface GbaButtonProps {
   onRelease: () => void;
 }
 
-export default function GbaButton({
+export default function GbaMenuButton({
   item,
   tall = false,
   pressed,

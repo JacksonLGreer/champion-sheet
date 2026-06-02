@@ -3,7 +3,8 @@ import { useState } from "react";
 import { createClient } from '../Services/supabase/supabase-client'
 import { useRouter } from "next/navigation";
 import router from "next/dist/shared/lib/router/router";
-import GbaButton from "../Components/gbaButton";
+import GbaButton from "../Components/gbaMenuButton";
+import Pokeball from "../Components/pokeball";
 type AuthMode = "login" | "signup";
  
 export default function AuthPage() {
@@ -55,27 +56,7 @@ export default function AuthPage() {
     >
       {/* ── Pokéball Logo ── */}
       <div className="flex flex-col items-center mb-6">
-        <div className="relative w-14 h-14 mb-3">
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              border: "4px solid #c00",
-              animation: "spin-slow 8s linear infinite",
-            }}
-          />
-          <div
-            className="absolute inset-2 rounded-full flex items-center justify-center"
-            style={{
-              background: "linear-gradient(180deg,#e00 50%,#fff 50%)",
-              border: "3px solid #333",
-            }}
-          >
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ background: "#fff", border: "2px solid #555" }}
-            />
-          </div>
-        </div>
+        <Pokeball />
  
         <h1
           className="text-3xl font-black tracking-widest uppercase"

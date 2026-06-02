@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { fetchPokemonFromAPIName, Pokemon, getAllPokemon } from "./Services/pokemon-service";
 import Stat from "./Components/Stat";
-import GbaButton, { type GbaButtonItem } from "./Components/gbaButton";
+import GbaButton, { type GbaButtonItem } from "./Components/gbaMenuButton";
 import { useRouter } from "next/navigation";
 import HomePage from "./home/page";
 import { createClient } from "./Services/supabase/supabase-client";

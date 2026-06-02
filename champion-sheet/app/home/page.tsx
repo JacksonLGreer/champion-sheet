@@ -2,61 +2,9 @@
 import { useEffect, useState } from "react";
 import { fetchPokemonFromAPIName, Pokemon, getAllPokemon, seedPokemonData } from "../Services/pokemon-service";
 import Stat from "../Components/Stat";
-import GbaButton, { type GbaButtonItem } from "../Components/gbaButton";
- 
-
-const menuItemsOG = [
-  {
-    id: "battle",
-    label: "BATTLE",
-    sublabel: "Event Ongoing!",
-    span: "large",
-    icon: "`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png`",
-    gradient: "from-red-600 via-orange-500 to-yellow-400",
-    glow: "shadow-orange-500/50",
-    badge: true,
-  },
-  {
-    id: "teams",
-    label: "TEAMS",
-    sublabel: "Your Pokémon Teams",
-    span: "small",
-    icon: "📦",
-    gradient: "from-blue-500 to-cyan-400",
-    glow: "shadow-cyan-400/40",
-    badge: false,
-  },
-  {
-    id: "notes",
-    label: "NOTES",
-    sublabel: "Training Logs & Ideas",
-    span: "small",
-    icon: "🏋️",
-    gradient: "from-green-500 to-emerald-400",
-    glow: "shadow-emerald-400/40",
-    badge: false,
-  },
-  {
-    id: "calculator",
-    label: "CALCULATOR",
-    sublabel: "Quick Battle Stats",
-    span: "small",
-    icon: "🤝",
-    gradient: "from-purple-600 to-violet-400",
-    glow: "shadow-violet-400/40",
-    badge: false,
-  },
-  {
-    id: "profile",
-    label: "PROFILE",
-    sublabel: "Your Profile Info",
-    span: "small",
-    icon: "🛍️",
-    gradient: "from-yellow-500 to-amber-400",
-    glow: "shadow-amber-400/40",
-    badge: false,
-  },
-];
+import GbaMenuButton, { type GbaButtonItem } from "../Components/gbaMenuButton";
+import Pokeball from "../Components/pokeball";
+import { useRouter } from "next/navigation";
 
 const menuItems: GbaButtonItem[] = [
   {
@@ -70,12 +18,12 @@ const menuItems: GbaButtonItem[] = [
     bottomColor: "#8b1a1a",
     border: "#3a0a0a",
     textColor: "#fff",
-    badge: true,
+    badge: false,
   },
   {
     id: "teams",
     label: "TEAMS",
-    sublabel: "Your Pokémon Teams",
+    sublabel: "Your Pokémon Teams and Builds",
     icon: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/279.png`,
     iconAlt: "Teams",
     topColor: "#4a9eda",
@@ -85,9 +33,9 @@ const menuItems: GbaButtonItem[] = [
     badge: false,
   },
   {
-    id: "notes",
-    label: "NOTES",
-    sublabel: "Battle Notes",
+    id: "log",
+    label: "LOG",
+    sublabel: "Battle Logs and Notes",
     icon: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/248.png`,
     iconAlt: "Notes",
     topColor: "#5aba6a",
@@ -121,15 +69,25 @@ const menuItems: GbaButtonItem[] = [
     badge: false,
   },
 ];
+
+const routes: Record<string, string> = {
+    battle: "/battle",
+    teams: "/teams",
+    notes: "/notes",
+    calculator: "/calculator",
+    profile: "/profile",
+  };
+
 export default function Home() {
 
 
- 
+  const router = useRouter();
   const [pressed, setPressed] = useState<string | null>(null);
  
   const battle = menuItems[0];
   const grid = menuItems.slice(1);
   
+
    
   useEffect(() => {
     async function loadPokemon() {
@@ -162,27 +120,7 @@ export default function Home() {
       {/* ── Header ── */}
       <header className="w-full max-w-md mb-8 text-center">
         <div className="flex justify-center mb-3">
-          <div className="relative w-14 h-14">
-            <div
-              className="absolute inset-0 rounded-full"
-              style={{
-                border: "4px solid #c00",
-                animation: "spin-slow 8s linear infinite",
-              }}
-            />
-            <div
-              className="absolute inset-2 rounded-full flex items-center justify-center"
-              style={{
-                background: "linear-gradient(180deg,#e00 50%,#fff 50%)",
-                border: "3px solid #333",
-              }}
-            >
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ background: "#fff", border: "2px solid #555" }}
-              />
-            </div>
-          </div>
+          <Pokeball />
         </div>
  
         <h1
@@ -215,22 +153,32 @@ export default function Home() {
       <main className="w-full max-w-md grid grid-cols-2 gap-3">
         {/* BATTLE spans 2 rows */}
         <div className="row-span-2">
-          <GbaButton
+          <GbaMenuButton
             item={battle}
             tall
             pressed={pressed === battle.id}
             onPress={() => setPressed(battle.id)}
-            onRelease={() => setPressed(null)}
+            onRelease={() => { 
+              if (pressed === battle.id) {
+                router.push(routes[battle.id]);
+              }
+              setPressed(null);
+            }}
           />
         </div>
  
         {grid.map((item) => (
-          <GbaButton
+          <GbaMenuButton
             key={item.id}
             item={item}
             pressed={pressed === item.id}
             onPress={() => setPressed(item.id)}
-            onRelease={() => setPressed(null)}
+            onRelease={() => { 
+              if (pressed === item.id) {   // ← only navigate if THIS button was pressed
+                router.push(routes[item.id]);
+              }
+              setPressed(null);
+            }}
           />
         ))}
       </main>
