@@ -1,7 +1,16 @@
+import { PokemonSet } from "../../Constants/PokemonInterface";
+import {Team} from "../../Constants/TeamInterface";
+
+const SLOT_KEYS = ["pokemon1", "pokemon2", "pokemon3", "pokemon4", "pokemon5", "pokemon6"] as const;
+
+
 export default function TeamSidebar(
     { team, active, setSelectedTeamId }: 
     { team: any, active: boolean, setSelectedTeamId: 
         (id: string) => void }) {
+
+            const slots = SLOT_KEYS.map(k => team[k] as PokemonSet | null);
+
     return (
         
         <button key={team.id} onClick={() => setSelectedTeamId(team.id)} style={{
@@ -12,14 +21,13 @@ export default function TeamSidebar(
                   }}>
                     {/* 2×3 mini sprite grid */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-                      {Array.from({ length: 6 }).map((_, i) => {
-                        const p = team.pokemon[i];
-                        return p ? (
-                          <img key={i} src={p.sprite} alt={p.name} style={{ width: 36, height: 36, imageRendering: "pixelated", opacity: active ? 1 : 0.55, filter: active ? "none" : "grayscale(40%)" }} />
+                      {slots.map((p, i) =>
+                        p ? (
+                          <img key={`${team.id}-${p.id}`} src={p.pokemon.sprite} alt={p.pokemon.name} style={{ width: 36, height: 36, imageRendering: "pixelated", opacity: active ? 1 : 0.55, filter: active ? "none" : "grayscale(40%)" }} />
                         ) : (
-                          <div key={i} style={{ width: 36, height: 36, border: "1px dashed #1e1e3a", borderRadius: 4, opacity: 0.3 }} />
-                        );
-                      })}
+                          <div key={`${team.id}-empty-${i}`} style={{ width: 36, height: 36, border: "1px dashed #1e1e3a", borderRadius: 4, opacity: 0.3 }} />
+                        )
+                      )}
                     </div>
                     <div>
                       <div style={{ fontFamily: "'Courier New', monospace", fontSize: 11, fontWeight: 900, color: active ? "#ffe066" : "#6666aa", letterSpacing: "0.08em", textTransform: "uppercase" }}>{team.name}</div>

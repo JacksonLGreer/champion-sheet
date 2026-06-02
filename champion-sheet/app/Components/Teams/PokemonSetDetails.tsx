@@ -1,22 +1,11 @@
 import Image from "next/image";
 import { TYPE_COLORS } from "../../Constants/TYPE_COLORS";
 import TypeBadge from "../TypeBadge";
+import { PokemonSet } from "../../Constants/PokemonInterface";
 
-interface PokemonSet {
-  id: string;
-  pokemonName: string;
-  sprite: string;
-  moves: string[];
-  nature: string;
-  item: string;
-  ability: string;
-  evSpread: string;
-  types: string[];
-  teamName?: string;
-}
 
 export default function PokemonSetDetails( { set }: { set: PokemonSet }) {
-      const c = TYPE_COLORS[set.types[1]] ?? TYPE_COLORS.normal;
+      const c = TYPE_COLORS[set.pokemon.types[1]] ?? TYPE_COLORS.normal;
 
     return (
        
@@ -34,11 +23,11 @@ export default function PokemonSetDetails( { set }: { set: PokemonSet }) {
       <div style={{ padding: "10px 12px 12px" }}>
         {/* Top: sprite + name */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <img src={set.sprite} alt={set.pokemonName} style={{ width: 48, height: 48, imageRendering: "pixelated", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.7))" }} />
+          <img src={set.pokemon.sprite} alt={set.pokemon.name} style={{ width: 48, height: 48, imageRendering: "pixelated", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.7))" }} />
           <div>
-            <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, fontWeight: 1, color: "#ffe066", letterSpacing: "0.08em", textTransform: "uppercase" }}>{set.pokemonName}</div>
+            <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, fontWeight: 1, color: "#ffe066", letterSpacing: "0.08em", textTransform: "uppercase" }}>{set.pokemon.name}</div>
             <div style={{ display: "flex", gap: 3, marginTop: 3, flexWrap: "wrap" }}>
-              {set.types.map(t => <TypeBadge key={t} type={t} />)}
+              {set.pokemon.types.map(t => <TypeBadge key={t} type={t} />)}
             </div>
           </div>
         {/* Moves */}
@@ -65,15 +54,10 @@ export default function PokemonSetDetails( { set }: { set: PokemonSet }) {
 
         {/* EV Spread */}
         <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: "#44445a", letterSpacing: "0.04em", borderTop: "1px solid #16163a", paddingTop: 6 }}>
-          Stat Points: {set.evSpread}
+          Stat Points: {set.evs.hp} HP, {set.evs.atk} Atk, {set.evs.def} Def, {set.evs.spa} SpA, {set.evs.spd} SpD, {set.evs.spe} Spe
         </div>
 
-        {/* Team tag */}
-        {set.teamName && (
-          <div style={{ marginTop: 4, fontFamily: "'Courier New', monospace", fontSize: 7, color: c.text, opacity: 0.6, letterSpacing: "0.06em" }}>
-            ◈ {set.teamName}
-          </div>
-        )}
+        
       </div>
     </div>
 
