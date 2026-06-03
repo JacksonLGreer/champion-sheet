@@ -25,7 +25,9 @@ export default function PokemonSetDetails( { set }: { set: PokemonSet }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <img src={set.pokemon.sprite} alt={set.pokemon.name} style={{ width: 48, height: 48, imageRendering: "pixelated", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.7))" }} />
           <div>
+            <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, fontWeight: 1, color: "#ffe066", letterSpacing: "0.08em", textTransform: "uppercase" }}>{set.set_name}</div>
             <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, fontWeight: 1, color: "#ffe066", letterSpacing: "0.08em", textTransform: "uppercase" }}>{set.pokemon.name}</div>
+
             <div style={{ display: "flex", gap: 3, marginTop: 3, flexWrap: "wrap" }}>
               {set.pokemon.types.map(t => <TypeBadge key={t} type={t} />)}
             </div>

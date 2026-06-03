@@ -12,6 +12,8 @@ import PokemonExpandedDetails from "../Components/Teams/PokemonExpandedDetails";
 import { createBrowserClient } from "@supabase/ssr";
 import { createClient } from "../Services/supabase/supabase-client";
 import NewSetModal from "../Components/Teams/NewSetModal";
+import NewTeamModal from "../Components/Teams/NewTeamModal";
+import router, { useRouter } from "next/navigation";
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const NATURES = ["Adamant", "Bashful", "Bold", "Brave", "Calm", "Careful", "Docile", "Gentle", "Hardy", "Hasty", "Impish", "Jolly", "Lax", "Lonely", "Mild", "Modest", "Naive", "Naughty", "Quiet", "Quirky", "Rash", "Relaxed", "Sassy", "Serious", "Timid"];
@@ -45,8 +47,6 @@ function StatBar({ stat, value, max = 255 }: { stat: number; value: number; max?
   );
 }
 
-// ── Expanded Pokémon Card (Teams tab right panel) ──────────────────────────
-
 
 // ── Empty Slot ─────────────────────────────────────────────────────────────
 
@@ -63,6 +63,7 @@ function EmptySlot() {
 
 export default function TeamsPage() {
     
+  const router = useRouter();
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [sets, setSets] = useState<PokemonSet[]>([]);
@@ -70,6 +71,7 @@ export default function TeamsPage() {
   const [activeTab, setActiveTab] = useState<"teams" | "sets">("teams");
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showNewSet, setShowNewSet] = useState(false);
+  const [showNewTeam, setShowNewTeam] = useState(false);
 
   // Sets filters
   const [search, setSearch] = useState("");
@@ -87,7 +89,7 @@ export default function TeamsPage() {
       if (!user) { setLoading(false); return; }
 
       const SET_FRAGMENT = `
-        id, item, nature, 
+        id, set_name, item, nature, 
         hp_ev, atk_ev, def_ev, spa_ev, spd_ev, spe_ev,
         ability:abilities!ability ( name ),
         move1:moves!move1 ( name ),
@@ -129,6 +131,7 @@ export default function TeamsPage() {
       // Shape each slot's raw response into PokemonSet
       const shapeSlot = (s: any): PokemonSet => ({
         id: s.id,
+        set_name: s.set_name,
         item: s.item,
         nature: s.nature,
         evs: {
@@ -197,6 +200,11 @@ export default function TeamsPage() {
     load();
   }, []);
 
+  // - Nav -
+  const handleBack = () => {
+    router.push("/");
+  };
+
   // ── Derived state ────────────────────────────────────────────────────────
 
   const selectedTeam = teams.find(t => t.id === selectedTeamId) ?? null;
@@ -225,17 +233,17 @@ export default function TeamsPage() {
   // ── Loading state ────────────────────────────────────────────────────────
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#1a1a2e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#1a1a2e", backgroundImage: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ fontFamily: "'Courier New', monospace", color: "#ffe066", fontSize: 12, letterSpacing: "0.2em" }}>LOADING...</div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#1a1a2e", backgroundImage: "radial-gradient(ellipse at 50% 0%, #2a1a4e 0%, #0d0d1a 70%)", fontFamily: "'Courier New', monospace", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#1a1a2e", backgroundImage: "radial-gradient(ellipse at 50% 0%, #2a1a4e 0%, #0d0d1a 70%)", fontFamily: "'Courier New', monospace", display: "flex", flexDirection: "column" }}>
 
       {/* ── Top Bar ── */}
       <header style={{ padding: "14px 16px 10px", borderBottom: "1px solid #1e1e3a", display: "flex", alignItems: "center", gap: 10, background: "rgba(10,10,25,0.7)", backdropFilter: "blur(4px)" }}>
-        <button style={{ background: "none", border: "none", color: "#6666aa", cursor: "pointer", padding: "2px 6px 2px 0", fontFamily: "'Courier New', monospace", fontSize: 18, lineHeight: 1 }} aria-label="Back">←</button>
+        <button onClick={() => handleBack()} style={{ background: "none", border: "none", color: "#6666aa", cursor: "pointer", padding: "2px 6px 2px 0", fontFamily: "'Courier New', monospace", fontSize: 18, lineHeight: 1 }} aria-label="Back">←</button>
         <div>
           <h1 style={{ margin: 0, fontSize: 18, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: "#ffe066", textShadow: "0 2px 0 #7a5a00", lineHeight: 1 }}>My Teams</h1>
           <p style={{ margin: 0, fontSize: 9, color: "#44445a", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 2 }}>{teams.length} teams · {sets.length} sets</p>
@@ -273,7 +281,7 @@ export default function TeamsPage() {
             </div>
             {/* New Team button */}
             <div style={{ padding: 10, borderTop: "1px solid #1e1e3a", background: "rgba(8,8,20,0.9)" }}>
-              <button style={{ width: "100%", background: "linear-gradient(180deg, #2a2a4e 0%, #16163a 100%)", border: "1px solid #3a3a6e", borderRadius: 6, color: "#ffe066", fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "9px 4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, boxShadow: "0 3px 0 #0a0a20" }}>
+              <button onClick={() => setShowNewTeam(true)} style={{ width: "100%", background: "linear-gradient(180deg, #2a2a4e 0%, #16163a 100%)", border: "1px solid #3a3a6e", borderRadius: 6, color: "#ffe066", fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "9px 4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, boxShadow: "0 3px 0 #0a0a20" }}>
                 <span style={{ fontSize: 16, lineHeight: 1, marginTop: -1 }}>+</span> New Team
               </button>
             </div>
@@ -449,6 +457,15 @@ export default function TeamsPage() {
           }}
         />
       )}
+      {showNewTeam && (
+        <NewTeamModal
+          onClose={() => setShowNewTeam(false)}
+          onSaved={async () => {
+            await load();
+            setShowNewTeam(false);
+          }}
+        />
+      )}       
     </div>
   );
 }

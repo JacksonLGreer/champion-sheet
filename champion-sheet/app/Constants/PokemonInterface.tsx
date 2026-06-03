@@ -1,5 +1,6 @@
 export interface PokemonSet {
   id: number;
+  set_name: string;
   item: string;
   nature: string;
   ability: string;        // joined from abilities table
