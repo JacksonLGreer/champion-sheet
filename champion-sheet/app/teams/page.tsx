@@ -14,6 +14,7 @@ import { createClient } from "../Services/supabase/supabase-client";
 import NewSetModal from "../Components/Teams/NewSetModal";
 import NewTeamModal from "../Components/Teams/NewTeamModal";
 import router, { useRouter } from "next/navigation";
+import { getUserSets, getTeams } from "../Services/teams-service";
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const NATURES = ["Adamant", "Bashful", "Bold", "Brave", "Calm", "Careful", "Docile", "Gentle", "Hardy", "Hasty", "Impish", "Jolly", "Lax", "Lonely", "Mild", "Modest", "Naive", "Naughty", "Quiet", "Quirky", "Rash", "Relaxed", "Sassy", "Serious", "Timid"];
@@ -81,112 +82,26 @@ export default function TeamsPage() {
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const load = async () => {
-    setLoading(true);  
+    setLoading(true);
     const supabase = createClient();
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
 
-      const SET_FRAGMENT = `
-        id, set_name, item, nature, 
-        hp_ev, atk_ev, def_ev, spa_ev, spd_ev, spe_ev,
-        ability:abilities!ability ( name ),
-        move1:moves!move1 ( name ),
-        move2:moves!move2 ( name ),
-        move3:moves!move3 ( name ),
-        move4:moves!move4 ( name ),
-        pokemon:pokemon!pokemon_id (
-          id, name, pokedexNum,
-          stats:pokemon_stats ( hp, attack, defense, special_attack, special_defense, speed ),
-          types:types ( type1, type2 )
-        )
-      `;
-
-      const [teamRes, setsRes] = await Promise.all([
-        supabase
-          .from("teams")
-          .select(`
-            id, name, format, created_at, trainer_id,
-            pokemon1:pokemon_sets!pokemon1 ( ${SET_FRAGMENT} ),
-            pokemon2:pokemon_sets!pokemon2( ${SET_FRAGMENT} ),
-            pokemon3:pokemon_sets!pokemon3 ( ${SET_FRAGMENT} ),
-            pokemon4:pokemon_sets!pokemon4 ( ${SET_FRAGMENT} ),
-            pokemon5:pokemon_sets!pokemon5 ( ${SET_FRAGMENT} ),
-            pokemon6:pokemon_sets!pokemon6 ( ${SET_FRAGMENT} )
-          `)
-          .eq("trainer_id", user.id),
-        supabase
-          .from("pokemon_sets")
-          .select(SET_FRAGMENT)
-          .eq("trainer_id", user.id)
+    try {
+      const [shapedTeams, allSetsData] = await Promise.all([
+        getTeams(user.id),
+        getUserSets(user.id),
       ]);
 
-      const { data: teamData, error: teamError } = teamRes;
-      const { data: allSetsData, error: setsError } = setsRes;
-
-      if (teamError) { console.error(teamError); console.error("Message: " + teamError.message); setLoading(false); return; }
-      if (setsError) { console.error(setsError); console.error("Message: " + setsError.message); setLoading(false); return; }
-
-      // Shape each slot's raw response into PokemonSet
-      const shapeSlot = (s: any): PokemonSet => ({
-        id: s.id,
-        set_name: s.set_name,
-        item: s.item,
-        nature: s.nature,
-        evs: {
-          hp:  s.hp_ev,
-          atk: s.atk_ev,
-          def: s.def_ev,
-          spa: s.spa_ev,
-          spd: s.spd_ev,
-          spe: s.spe_ev,
-        },
-        ability: s.ability.name,
-        moves: [s.move1.name, s.move2.name, s.move3.name, s.move4.name],
-        pokemon: {
-          id: s.pokemon.id,
-          name: s.pokemon.name,
-          sprite: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${s.pokemon.pokedexNum}.png`,
-          types: [s.pokemon.types.type1, s.pokemon.types.type2].filter(Boolean),
-          baseStats: {
-            hp:  s.pokemon.stats.hp,
-            atk: s.pokemon.stats.attack,
-            def: s.pokemon.stats.defense,
-            spa: s.pokemon.stats.special_attack,
-            spd: s.pokemon.stats.special_defense,
-            spe: s.pokemon.stats.speed,
-          },
-        },
-      });
-
-      
-      const shapedTeams: Team[] = (teamData ?? []).map((t: any) => ({
-        id: t.id,
-        name: t.name,
-        format: t.format,
-        created_at: t.created_at,
-        trainer_id: t.trainer_id,
-        pokemon1: t.pokemon1 ? shapeSlot(t.pokemon1) : null,
-        pokemon2: t.pokemon2 ? shapeSlot(t.pokemon2) : null,
-        pokemon3: t.pokemon3 ? shapeSlot(t.pokemon3) : null,
-        pokemon4: t.pokemon4 ? shapeSlot(t.pokemon4) : null,
-        pokemon5: t.pokemon5 ? shapeSlot(t.pokemon5) : null,
-        pokemon6: t.pokemon6 ? shapeSlot(t.pokemon6) : null,
-      }));
-
-      // Flatten all non-null slots into the sets list, then add all other sets from DB
       const setMap = new Map(
         shapedTeams
-          .flatMap(t => getSlotsAsArray(t).filter((s): s is PokemonSet => s !== null))
+          .flatMap((t: Team) => getSlotsAsArray(t).filter((s): s is PokemonSet => s !== null))
           .map(s => [s.id, s])
       );
 
-      // Add all sets from DB (including those not on any team)
-      (allSetsData ?? []).forEach((rawSet: any) => {
-        if (!setMap.has(rawSet.id)) {
-          setMap.set(rawSet.id, shapeSlot(rawSet));
-        }
+      (allSetsData ?? []).forEach((s: PokemonSet) => {
+        if (!setMap.has(s.id)) setMap.set(s.id, s);
       });
 
       const allSets = Array.from(setMap.values());
@@ -194,8 +109,12 @@ export default function TeamsPage() {
       setTeams(shapedTeams);
       setSets(allSets);
       setSelectedTeamId(shapedTeams[0]?.id ?? null);
+    } catch (err) {
+      console.error(err);
+    } finally {
       setLoading(false);
     }
+  }
   useEffect(() => {
     load();
   }, []);
