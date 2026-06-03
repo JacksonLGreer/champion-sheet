@@ -7,21 +7,11 @@ import { TYPE_COLORS } from "../Constants/TYPE_COLORS";
 import TypeBadge from "../Components/TypeBadge";
 import { STAT_COLORS, STAT_LABELS } from "../Constants/STAT_CONSTANTS";
 import { PokemonSetSupa, PokemonSet } from "../Constants/PokemonInterface";
-import { createClient } from "../Services/supabase/supabase-server";
 import { Team } from "../Constants/TeamInterface";
-import { createBrowserClient } from "@supabase/ssr/dist/module/createBrowserClient";
-// ── Types ──────────────────────────────────────────────────────────────────
-
-
-
-
-
-
-
+import PokemonExpandedDetails from "../Components/Teams/PokemonExpandedDetails";
+import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "../Services/supabase/supabase-client";
 // ── Constants ──────────────────────────────────────────────────────────────
-
-
-
 
 const NATURES = ["Adamant", "Bashful", "Bold", "Brave", "Calm", "Careful", "Docile", "Gentle", "Hardy", "Hasty", "Impish", "Jolly", "Lax", "Lonely", "Mild", "Modest", "Naive", "Naughty", "Quiet", "Quirky", "Rash", "Relaxed", "Sassy", "Serious", "Timid"];
 
@@ -41,7 +31,7 @@ function calcStat(base: number, ev: number, iv: number, nature: number, isHp: bo
 
 // ── Micro-components ───────────────────────────────────────────────────────
 
-function StatBar({ stat, value, max = 255 }: { stat: string; value: number; max?: number }) {
+function StatBar({ stat, value, max = 255 }: { stat: number; value: number; max?: number }) {
   const pct = Math.round((value / max) * 100);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -56,91 +46,6 @@ function StatBar({ stat, value, max = 255 }: { stat: string; value: number; max?
 
 // ── Expanded Pokémon Card (Teams tab right panel) ──────────────────────────
 
-function ExpandedPokemonCard({ pokemon }: { pokemon: PokemonSet }) {
-  const natMult = (stat: string) => {
-    const boosts: Record<string, [string, string]> = {
-      Adamant: ["atk", "spa"], Modest: ["spa", "atk"], Jolly: ["spe", "spa"],
-      Timid: ["spe", "atk"], Bold: ["def", "atk"], Impish: ["def", "spa"],
-      Careful: ["spd", "spa"], Calm: ["spd", "atk"], Brave: ["atk", "spe"],
-      Quiet: ["spa", "spe"], Relaxed: ["def", "spe"], Sassy: ["spd", "spe"],
-      Hasty: ["spe", "def"], Naive: ["spe", "spd"], Naughty: ["atk", "spd"],
-      Rash: ["spa", "spd"], Lax: ["def", "spd"], Mild: ["spa", "def"],
-      Lonely: ["atk", "def"], Gentle: ["spd", "def"],
-    };
-    const entry = boosts[pokemon.nature];
-    if (!entry) return 1;
-    if (entry[0] === stat) return 1.1;
-    if (entry[1] === stat) return 0.9;
-    return 1;
-  };
-
-  
-
-  return (
-    <div style={{
-      background: "linear-gradient(160deg, #13132a 0%, #0a0a18 100%)",
-      border: "1px solid #252545",
-      borderRadius: 10,
-      overflow: "hidden",
-      position: "relative",
-    }}>
-      {/* dot-grid texture */}
-      <div style={{ position: "absolute", inset: 0, opacity: 0.025, backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "14px 14px", pointerEvents: "none" }} />
-
-      {/* Header strip */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px 0", position: "relative" }}>
-        <img src={pokemon.pokemon.sprite} alt={pokemon.pokemon.name} style={{ width: 64, height: 64, imageRendering: "pixelated", filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.7))" }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'Courier New', monospace", fontSize: 13, fontWeight: 900, color: "#ffe066", letterSpacing: "0.1em", textTransform: "uppercase", textShadow: "0 1px 0 #7a5a00" }}>
-            {pokemon.pokemon.name}
-          </div>
-          <div style={{ display: "flex", gap: 4, marginTop: 3, flexWrap: "wrap" }}>
-            {pokemon.pokemon.types.map(t => <TypeBadge key={t} type={t} />)}
-          </div>
-          <div style={{ fontFamily: "'Courier New', monospace", fontSize: 9, color: "#6666aa", marginTop: 4 }}>
-             {pokemon.nature} · {pokemon.ability}
-          </div>
-        </div>
-        {/* Item */}
-        <div style={{ background: "#0a0a1e", border: "1px solid #2a2a4e", borderRadius: 6, padding: "4px 8px", textAlign: "center", flexShrink: 0 }}>
-          <div style={{ fontSize: 9, color: "#44445a", fontFamily: "'Courier New', monospace", letterSpacing: "0.06em" }}>ITEM</div>
-          <div style={{ fontSize: 9, color: "#aaaacc", fontFamily: "'Courier New', monospace", fontWeight: 700, marginTop: 1, maxWidth: 70, lineHeight: 1.3 }}>{pokemon.item}</div>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div style={{ margin: "8px 12px", height: 1, background: "linear-gradient(to right, #ffe06622, #2a2a4e, transparent)" }} />
-
-      {/* Moves + Stats columns */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "0 12px 10px" }}>
-        {/* Moves */}
-        <div>
-          <div style={{ fontFamily: "'Courier New', monospace", fontSize: 8, color: "#44445a", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 5 }}>Moves</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {pokemon.moves.map((m, i) => (
-              <div key={i} style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: "#aaaacc", display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ color: "#ffe06666", fontSize: 8 }}>{"▸"}</span>
-                {m}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div>
-          <div style={{ fontFamily: "'Courier New', monospace", fontSize: 8, color: "#44445a", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 5 }}>Stats</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(s => (
-              <StatBar key={s} stat={s} value={pokemon.pokemon.baseStats[s]} />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      
-    </div>
-  );
-}
 
 // ── Empty Slot ─────────────────────────────────────────────────────────────
 
@@ -153,12 +58,7 @@ function EmptySlot() {
   );
 }
 
-// -- Supabase Client --
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 
 
@@ -166,6 +66,9 @@ const supabase = createBrowserClient(
 
 export default function TeamsPage() {
   
+  // -- Supabase Client --
+  
+
   const [teams, setTeams] = useState<Team[]>([]);
   const [sets, setSets] = useState<PokemonSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,6 +85,8 @@ export default function TeamsPage() {
 
   useEffect(() => {
     async function load() {
+      const supabase = createClient();
+
       const SET_FRAGMENT = `
         id, item, nature, 
         hp_ev, atk_ev, def_ev, spa_ev, spd_ev, spe_ev,
@@ -470,10 +375,10 @@ console.log("Shaped teams:", JSON.stringify(shapedTeams, null, 2));
                   <div style={{ marginTop: 8, height: 1, background: "linear-gradient(to right, #ffe06644, transparent)" }} />
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {getSlotsAsArray(selectedTeam).map((slot, i) =>
                     slot
-                      ? <ExpandedPokemonCard key={`${selectedTeam.id}-${slot.id}`} pokemon={slot} />
+                      ? <PokemonExpandedDetails key={`${selectedTeam.id}-${slot.id}`} pokemon={slot} />
                       : <EmptySlot key={`${selectedTeam.id}-empty-${i}`} />
                   )}
                 </div>

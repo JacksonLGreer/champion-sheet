@@ -1,3 +1,4 @@
+
 export default function Stat({ label, value = 0 }: { label: string; value?: number }) {
   return (
     <div>
@@ -14,3 +15,4 @@ export default function Stat({ label, value = 0 }: { label: string; value?: numb
     </div>
   );
 }
+
