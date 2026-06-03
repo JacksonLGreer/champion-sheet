@@ -23,8 +23,8 @@ export interface Pokemon {
     type2: string | null;
   };
 
-  abilities?: string[];
-  moves?: string[];
+  abilities?: Array<{id: number; name: string}>;
+  moves?: Array<{id: number; name: string}>;
 }
 
 // Returns a list of all the pokemon

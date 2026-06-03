@@ -11,6 +11,7 @@ import { Team } from "../Constants/TeamInterface";
 import PokemonExpandedDetails from "../Components/Teams/PokemonExpandedDetails";
 import { createBrowserClient } from "@supabase/ssr";
 import { createClient } from "../Services/supabase/supabase-client";
+import NewSetModal from "../Components/Teams/NewSetModal";
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const NATURES = ["Adamant", "Bashful", "Bold", "Brave", "Calm", "Careful", "Docile", "Gentle", "Hardy", "Hasty", "Impish", "Jolly", "Lax", "Lonely", "Mild", "Modest", "Naive", "Naughty", "Quiet", "Quirky", "Rash", "Relaxed", "Sassy", "Serious", "Timid"];
@@ -58,22 +59,17 @@ function EmptySlot() {
   );
 }
 
-
-
-
-
 // ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function TeamsPage() {
-  
-  // -- Supabase Client --
-  
+    
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [sets, setSets] = useState<PokemonSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"teams" | "sets">("teams");
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [showNewSet, setShowNewSet] = useState(false);
 
   // Sets filters
   const [search, setSearch] = useState("");
@@ -82,10 +78,13 @@ export default function TeamsPage() {
   const [filterTeam, setFilterTeam] = useState("all");
 
   // ── Fetch ────────────────────────────────────────────────────────────────
+  const load = async () => {
+    setLoading(true);  
+    const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const supabase = createClient();
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
 
       const SET_FRAGMENT = `
         id, item, nature, 
@@ -102,20 +101,30 @@ export default function TeamsPage() {
         )
       `;
 
-      const { data: teamData, error: teamError } = await supabase
-        .from("teams")
-        .select(`
-          id, name, format, created_at, trainer_id,
-          pokemon1:pokemon_sets!pokemon1 ( ${SET_FRAGMENT} ),
-          pokemon2:pokemon_sets!pokemon2( ${SET_FRAGMENT} ),
-          pokemon3:pokemon_sets!pokemon3 ( ${SET_FRAGMENT} ),
-          pokemon4:pokemon_sets!pokemon4 ( ${SET_FRAGMENT} ),
-          pokemon5:pokemon_sets!pokemon5 ( ${SET_FRAGMENT} ),
-          pokemon6:pokemon_sets!pokemon6 ( ${SET_FRAGMENT} )
-        `);
-      console.log("Raw teamData:", JSON.stringify(teamData, null, 2));
+      const [teamRes, setsRes] = await Promise.all([
+        supabase
+          .from("teams")
+          .select(`
+            id, name, format, created_at, trainer_id,
+            pokemon1:pokemon_sets!pokemon1 ( ${SET_FRAGMENT} ),
+            pokemon2:pokemon_sets!pokemon2( ${SET_FRAGMENT} ),
+            pokemon3:pokemon_sets!pokemon3 ( ${SET_FRAGMENT} ),
+            pokemon4:pokemon_sets!pokemon4 ( ${SET_FRAGMENT} ),
+            pokemon5:pokemon_sets!pokemon5 ( ${SET_FRAGMENT} ),
+            pokemon6:pokemon_sets!pokemon6 ( ${SET_FRAGMENT} )
+          `)
+          .eq("trainer_id", user.id),
+        supabase
+          .from("pokemon_sets")
+          .select(SET_FRAGMENT)
+          .eq("trainer_id", user.id)
+      ]);
+
+      const { data: teamData, error: teamError } = teamRes;
+      const { data: allSetsData, error: setsError } = setsRes;
 
       if (teamError) { console.error(teamError); console.error("Message: " + teamError.message); setLoading(false); return; }
+      if (setsError) { console.error(setsError); console.error("Message: " + setsError.message); setLoading(false); return; }
 
       // Shape each slot's raw response into PokemonSet
       const shapeSlot = (s: any): PokemonSet => ({
@@ -162,23 +171,29 @@ export default function TeamsPage() {
         pokemon5: t.pokemon5 ? shapeSlot(t.pokemon5) : null,
         pokemon6: t.pokemon6 ? shapeSlot(t.pokemon6) : null,
       }));
-console.log("Shaped teams:", JSON.stringify(shapedTeams, null, 2));
 
-      // Flatten all non-null slots into the sets list
-      const allSets = Array.from(
-        new Map(
-          shapedTeams
-            .flatMap(t => getSlotsAsArray(t).filter((s): s is PokemonSet => s !== null))
-            .map(s => [s.id, s])
-        ).values()
+      // Flatten all non-null slots into the sets list, then add all other sets from DB
+      const setMap = new Map(
+        shapedTeams
+          .flatMap(t => getSlotsAsArray(t).filter((s): s is PokemonSet => s !== null))
+          .map(s => [s.id, s])
       );
+
+      // Add all sets from DB (including those not on any team)
+      (allSetsData ?? []).forEach((rawSet: any) => {
+        if (!setMap.has(rawSet.id)) {
+          setMap.set(rawSet.id, shapeSlot(rawSet));
+        }
+      });
+
+      const allSets = Array.from(setMap.values());
 
       setTeams(shapedTeams);
       setSets(allSets);
       setSelectedTeamId(shapedTeams[0]?.id ?? null);
       setLoading(false);
     }
-
+  useEffect(() => {
     load();
   }, []);
 
@@ -352,7 +367,8 @@ console.log("Shaped teams:", JSON.stringify(shapedTeams, null, 2));
 
             {/* New Set button */}
             <div style={{ marginTop: "auto", padding: 10, borderTop: "1px solid #1e1e3a", background: "rgba(8,8,20,0.9)" }}>
-              <button style={{ width: "100%", background: "linear-gradient(180deg, #2a2a4e 0%, #16163a 100%)", border: "1px solid #3a3a6e", borderRadius: 6, color: "#ffe066", fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "9px 4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, boxShadow: "0 3px 0 #0a0a20" }}>
+              <button   onClick={() => setShowNewSet(true)}
+                        style={{ width: "100%", background: "linear-gradient(180deg, #2a2a4e 0%, #16163a 100%)", border: "1px solid #3a3a6e", borderRadius: 6, color: "#ffe066", fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "9px 4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, boxShadow: "0 3px 0 #0a0a20" }}>
                 <span style={{ fontSize: 16, lineHeight: 1, marginTop: -1 }}>+</span> New Set
               </button>
             </div>
@@ -423,6 +439,16 @@ console.log("Shaped teams:", JSON.stringify(shapedTeams, null, 2));
         input::placeholder { color: #33334a; }
         select option { background: #0d0d1e; }
       `}</style>
+      {showNewSet && (
+        <NewSetModal
+          onClose={() => setShowNewSet(false)}
+          onSaved={async () => {
+            await load();
+            setShowNewSet(false);
+            // Re-run load to refresh sets
+          }}
+        />
+      )}
     </div>
   );
 }
