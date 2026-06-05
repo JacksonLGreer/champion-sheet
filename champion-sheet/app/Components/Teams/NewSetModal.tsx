@@ -4,6 +4,7 @@ import { createClient } from "../../Services/supabase/supabase-client";
 import TypeBadge from "../TypeBadge";
 import { STAT_COLORS, STAT_LABELS } from "../../Constants/STAT_CONSTANTS";
 import { getAllPokemon, Pokemon } from "../../Services/pokemon-service";
+import MoveListBrowser from "../MoveListBrowser";
 
 const NATURES = [
   "Adamant", "Bashful", "Bold", "Brave", "Calm", "Careful", "Docile",
@@ -37,12 +38,11 @@ export default function NewSetModal({ onClose, onSaved }: NewSetModalProps) {
   // ── Set fields ───────────────────────────────────────────────────────────
   const [abilitySearch, setAbilitySearch] = useState("");
   const [showAbilityDropdown, setShowAbilityDropdown] = useState(false);
-  const [moveSearches, setMoveSearches] = useState(["", "", "", ""]);
-  const [showMoveDropdown, setShowMoveDropdown] = useState([false, false, false, false]);
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
   const [selectedMoves, setSelectedMoves] = useState<(string | null)[]>([null, null, null, null]);
   const [nature, setNature] = useState("Hardy");
   const [item, setItem] = useState("");
+  const [setName, setSetName] = useState("");
   const [evs, setEvs] = useState({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,23 +74,22 @@ export default function NewSetModal({ onClose, onSaved }: NewSetModalProps) {
     setSelectedAbility(null);
     setAbilitySearch("");
     setSelectedMoves([null, null, null, null]);
-    setMoveSearches(["", "", "", ""]);
   }, [selectedPokemon]);
 
   // Filter locally — no more Supabase search call needed:
   const filteredPokemon = search.length < 2
-    ? []
-    : allPokemon.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).slice(0, 12);
+  ? []
+  : allPokemon
+      .filter(p => p.name.toLowerCase().startsWith(search.toLowerCase()))
+      .slice(0, 12);
   const filteredAbilities = (selectedPokemon?.abilities ?? [] as Array<{id: number; name: string}>)
     .filter((a: {id: number; name: string}) => a.name.toLowerCase().includes(abilitySearch.toLowerCase()))
     .slice(0, 8);
-  const filteredMoves = (i: number) => (selectedPokemon?.moves ?? [] as Array<{id: number; name: string}>)
-    .filter((m: {id: number; name: string}) => m.name.toLowerCase().includes(moveSearches[i].toLowerCase()))
-    .map(m => m.name)
-    .slice(0, 8);
-  const allMoves = (selectedPokemon?.moves ?? [] as Array<{id: number; name: string}>).map(m => m.name);
+  
+ 
   const evTotal = Object.values(evs).reduce((a, b) => a + b, 0);
  
+
 
   // ── Save ─────────────────────────────────────────────────────────────────
   async function handleSave() {
@@ -114,6 +113,7 @@ export default function NewSetModal({ onClose, onSaved }: NewSetModalProps) {
     const { error: saveError } = await supabase.from("pokemon_sets").insert({
       pokemon_id: selectedPokemon.id,
       trainer_id: userId,
+      set_name: setName,
       ability: abilityData.id,
       move1: moveIdMap[selectedMoves[0]!],
       move2: moveIdMap[selectedMoves[1]!],
@@ -171,7 +171,13 @@ export default function NewSetModal({ onClose, onSaved }: NewSetModalProps) {
         {/* ── Title bar ── */}
         <div style={{ background: "linear-gradient(90deg,#1a1a38,#12122a)", borderBottom: "1px solid #2a2a4e", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontSize: 11, fontWeight: 900, color: "#ffe066", letterSpacing: "0.2em", textTransform: "uppercase", textShadow: "0 1px 0 #7a5a00" }}>New Pokémon Set</span>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <input
+              value={setName}
+              onChange={e => setSetName(e.target.value)}
+              placeholder="Set name"
+              style={{ ...inp, width: 160, padding: "4px 8px", fontSize: 9 }}
+            />
             <button onClick={handleSave} disabled={saving} style={{ background: saving ? "#0d0d1e" : "#1a3a1a", border: "1px solid #2a5a2a", borderRadius: 3, color: saving ? "#33334a" : "#66ee66", fontFamily: "'Courier New', monospace", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 10px", cursor: saving ? "not-allowed" : "pointer" }}>
               {saving ? "Saving…" : "✓ Save"}
             </button>
@@ -260,34 +266,19 @@ export default function NewSetModal({ onClose, onSaved }: NewSetModalProps) {
             </div>
           </div>
 
-          {/* Moves column */}
+          {/* Moves — display only, selection driven by MoveListBrowser below */}
           <div style={{ borderRight: "1px solid #1a1a32", padding: "10px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
             <div style={{ fontSize: 9, fontWeight: 700, color: "#ffe066", letterSpacing: "0.14em", textTransform: "uppercase", borderBottom: "1px solid #1a1a32", paddingBottom: 4, marginBottom: 2 }}>Moves</div>
             {[0, 1, 2, 3].map(i => (
-              <div key={i} style={{ position: "relative" }}>
-                <input
-                  value={moveSearches[i]}
-                  placeholder={`Move ${i + 1}…`}
-                  onChange={e => {
-                    const s = [...moveSearches]; s[i] = e.target.value; setMoveSearches(s);
-                    const ids = [...selectedMoves]; ids[i] = null; setSelectedMoves(ids);
-                    const show = [...showMoveDropdown]; show[i] = true; setShowMoveDropdown(show);
-                  }}
-                  onFocus={() => { const show = [...showMoveDropdown]; show[i] = true; setShowMoveDropdown(show); }}
-                  style={{ ...inp, borderColor: selectedMoves[i] ? "#4a9eda" : "#2a2a4e" }}
-                />
-                {showMoveDropdown[i] && filteredMoves(i).length > 0 && !selectedMoves[i] && (
-                  <div style={ddWrap}>
-                    {filteredMoves(i).map(m => (
-                      <div key={m} onClick={() => {
-                        const ids = [...selectedMoves]; ids[i] = m; setSelectedMoves(ids);
-                        const s = [...moveSearches]; s[i] = m; setMoveSearches(s);
-                        const show = [...showMoveDropdown]; show[i] = false; setShowMoveDropdown(show);
-                      }} style={ddItem(selectedMoves[i] === m)}>
-                        {m}
-                      </div>
-                    ))}
-                  </div>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div style={{ flex: 1, background: "#06060f", border: `1px solid ${selectedMoves[i] ? "#4a9eda" : "#2a2a4e"}`, borderRadius: 4, padding: "5px 7px", fontSize: 10, color: selectedMoves[i] ? "#cccce0" : "#2a2a4a", fontFamily: "'Courier New', monospace", letterSpacing: "0.04em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {selectedMoves[i] ?? `Move ${i + 1}…`}
+                </div>
+                {selectedMoves[i] && (
+                  <button
+                    onClick={() => { const next = [...selectedMoves]; next[i] = null; setSelectedMoves(next); }}
+                    style={{ background: "none", border: "none", color: "#44445a", cursor: "pointer", fontSize: 12, lineHeight: 1, padding: "0 2px", flexShrink: 0 }}
+                  >✕</button>
                 )}
               </div>
             ))}
@@ -310,8 +301,17 @@ export default function NewSetModal({ onClose, onSaved }: NewSetModalProps) {
                     <div style={{ width: `${pct}%`, height: "100%", background: STAT_COLORS[s], opacity: 0.8, borderRadius: 3 }} />
                   </div>
                   <input
-                    type="number" min={0} max={252} value={evs[s]}
-                    onChange={e => setEvs(prev => ({ ...prev, [s]: Math.min(252, Math.max(0, Number(e.target.value))) }))}
+                    type="number" min={0} max={32} value={evs[s]}
+                    onChange={e => {
+                      const raw = Number(e.target.value);
+                      setEvs(prev => {
+                        const prevVal = (prev as any)[s] ?? 0;
+                        const totalWithout = Object.values(prev).reduce((a, b) => a + b, 0) - prevVal;
+                        const maxForStat = Math.max(0, Math.min(32, 66 - totalWithout));
+                        const newVal = Number.isNaN(raw) ? 0 : Math.max(0, Math.min(maxForStat, raw));
+                        return { ...prev, [s]: newVal } as typeof prev;
+                      });
+                    }}
                     style={{ ...inp, padding: "2px 4px", textAlign: "center", fontSize: 9, width: 36 }}
                   />
                 </div>
@@ -323,53 +323,11 @@ export default function NewSetModal({ onClose, onSaved }: NewSetModalProps) {
           </div>
         </div>
 
-        {/* ── Move list browser ── */}
-        <div style={{ padding: "8px 12px 4px", borderBottom: "1px solid #1a1a32", background: "#09091a" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 80px 60px 48px 48px 36px", gap: 0 }}>
-            {["Name", "Type", "Cat", "Pow", "Acc", "PP"].map(h => (
-              <div key={h} style={{ fontSize: 8, color: "#44445a", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 6px", borderBottom: "1px solid #1a1a32", fontWeight: 700 }}>{h}</div>
-            ))}
-          </div>
-        </div>
-
-        {/* Move rows — filtered by whatever move slot is focused */}
-        <div style={{ maxHeight: 260, overflowY: "auto", background: "#08081a" }}>
-          {!selectedPokemon ? (
-            <div style={{ padding: 20, textAlign: "center", color: "#2a2a4a", fontFamily: "'Courier New', monospace", fontSize: 10, letterSpacing: "0.1em" }}>
-              Select a Pokémon to see its moves
-            </div>
-          ) : allMoves.filter((m: string) => {
-            const activeSearch = moveSearches.find(s => s.length > 0) ?? "";
-            return activeSearch.length < 2 || m.toLowerCase().includes(activeSearch.toLowerCase());
-          }).slice(0, 40).map((m: string, idx: number) => (
-            <div
-              key={idx}
-              onClick={() => {
-                const activeSlot = showMoveDropdown.findIndex(v => v);
-                const emptySlot = selectedMoves.findIndex(s => s === null);
-                const target = activeSlot >= 0 ? activeSlot : emptySlot >= 0 ? emptySlot : 0;
-                const ids = [...selectedMoves]; ids[target] = m; setSelectedMoves(ids);
-                const s = [...moveSearches]; s[target] = m; setMoveSearches(s);
-                const show = [...showMoveDropdown]; show[target] = false; setShowMoveDropdown(show);
-              }}
-              style={{
-                display: "grid", gridTemplateColumns: "2fr 80px 60px 48px 48px 36px",
-                background: idx % 2 === 0 ? "#08081a" : "#0a0a1e",
-                borderBottom: "1px solid #10101e", cursor: "pointer",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#14143a")}
-              onMouseLeave={e => (e.currentTarget.style.background = idx % 2 === 0 ? "#08081a" : "#0a0a1e")}
-            >
-              <div style={{ padding: "5px 6px", fontSize: 10, color: selectedMoves.includes(m) ? "#ffe066" : "#aaaacc", fontFamily: "'Courier New', monospace" }}>
-                {selectedMoves.includes(m) && <span style={{ color: "#ffe06688", marginRight: 4 }}>✓</span>}
-                {m}
-              </div>
-              {["—", "—", "—", "—", "—"].map((v, ci) => (
-                <div key={ci} style={{ padding: "5px 6px", fontSize: 9, color: "#44445a", fontFamily: "'Courier New', monospace" }}>{v}</div>
-              ))}
-            </div>
-          ))}
-        </div>
+        <MoveListBrowser
+          pokemonId={selectedPokemon?.id ?? null}
+          selectedMoves={selectedMoves}
+          onMovesChange={setSelectedMoves}
+        />
 
         {error && (
           <div style={{ padding: "6px 12px", background: "#1a0808", borderTop: "1px solid #3a1a1a", fontSize: 10, color: "#cc4444", fontFamily: "'Courier New', monospace", letterSpacing: "0.06em" }}>

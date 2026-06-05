@@ -17,7 +17,7 @@ export default function PokemonExpandedDetails({ pokemon }: { pokemon: PokemonSe
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px 0", position: "relative" }}>
-        <img src={pokemon.pokemon.sprite} alt={pokemon.pokemon.name} style={{ width: 64, height: 64, imageRendering: "pixelated", filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.7))" }} />
+        <img src={pokemon.pokemon.sprite} alt={pokemon.pokemon.name} style={{ width: 90, height: 90, imageRendering: "pixelated", filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.7))" }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: "'Courier New', monospace", fontSize: 13, fontWeight: 900, color: "#ffe066", letterSpacing: "0.1em", textTransform: "uppercase", textShadow: "0 1px 0 #7a5a00" }}>
             {pokemon.pokemon.name}
@@ -25,7 +25,7 @@ export default function PokemonExpandedDetails({ pokemon }: { pokemon: PokemonSe
           <div style={{ display: "flex", gap: 4, marginTop: 3, flexWrap: "wrap" }}>
             {pokemon.pokemon.types.map(t => <TypeBadge key={t} type={t} />)}
           </div>
-          <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: "#6666aa", marginTop: 4 }}>
+          <div style={{ fontFamily: "'Courier New', monospace", fontSize: 14, color: "#aaaacc", marginTop: 4 }}>
             {pokemon.nature} · {pokemon.ability}
           </div>
         </div>
@@ -40,12 +40,12 @@ export default function PokemonExpandedDetails({ pokemon }: { pokemon: PokemonSe
       <div style={{ margin: "8px 12px", height: 1, background: "linear-gradient(to right, #ffe06622, #2a2a4e, transparent)" }} />
 
       {/* Moves + Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "0 12px 10px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, padding: "0 12px 10px" }}>
         <div>
           <div style={{ fontFamily: "'Courier New', monospace", fontSize: 8, color: "#44445a", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 5 }}>Moves</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {pokemon.moves.map((m, i) => (
-              <div key={i} style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: "#aaaacc", display: "flex", alignItems: "center", gap: 5 }}>
+              <div key={i} style={{ fontFamily: "'Courier New', monospace", fontSize: 14, color: "#aaaacc", display: "flex", alignItems: "center", gap: 5 }}>
                 <span style={{ color: "#ffe06666", fontSize: 8 }}>▸</span>
                 {m}
               </div>
@@ -61,22 +61,21 @@ export default function PokemonExpandedDetails({ pokemon }: { pokemon: PokemonSe
             ))}
           </div>
         </div>
-      </div>
-
-      {/* EVs */}
-      <div style={{ borderTop: "1px solid #16163a", padding: "6px 12px" }}>
-        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 8, color: "#44445a", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4 }}>EVs</div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(s =>
-            pokemon.evs[s] > 0 ? (
-              <div key={s} style={{ background: "#0a0a1e", border: "1px solid #1e1e3a", borderRadius: 4, padding: "2px 6px", textAlign: "center" }}>
-                <div style={{ fontSize: 8, color: STAT_COLORS[s], fontFamily: "'Courier New', monospace", fontWeight: 700 }}>{STAT_LABELS[s]}</div>
-                <div style={{ fontSize: 8, color: "#6666aa", fontFamily: "'Courier New', monospace" }}>{pokemon.evs[s]}</div>
+        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 8, color: "#44445a", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4 }}>
+          EVs
+          <div style={{ display: "flex", flexDirection: "column",  }}>
+            {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(s => (
+              <div key={s} style={{ display: "flex", alignItems: "center", background: "#0a0a1e", border: "1px solid #1e1e3a", borderRadius: 4, padding: "4px 6px", minHeight: 28 }}>
+                <span style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: STAT_COLORS[s], width: 30, fontWeight: 700, letterSpacing: "0.05em" }}>{STAT_LABELS[s]}</span>
+                <span style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: pokemon.evs[s] > 0 ? "#aaaacc" : "#3d4a6f", width: 28, textAlign: "right" }}>{pokemon.evs[s] || 0}</span>
               </div>
-            ) : null
-          )}
+            ))}
+          </div>
         </div>
       </div>
+
+      
+      <div style={{ borderTop: "1px solid #16163a", padding: "6px 12px" }}></div>
     </div>
   );
 }

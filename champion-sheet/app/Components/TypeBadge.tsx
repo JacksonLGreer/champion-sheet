@@ -1,7 +1,7 @@
 import { TYPE_COLORS } from "../Constants/TYPE_COLORS";
 
 export default function TypeBadge({ type }: { type: string }) {
-  const c = TYPE_COLORS[type] ?? TYPE_COLORS.normal;
+  const c = TYPE_COLORS[type.toLowerCase()] ?? TYPE_COLORS.normal;
   return (
     <span style={{ background: c.bg, 
       color: c.text, 

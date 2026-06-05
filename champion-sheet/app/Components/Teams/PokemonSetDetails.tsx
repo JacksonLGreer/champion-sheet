@@ -3,8 +3,13 @@ import { TYPE_COLORS } from "../../Constants/TYPE_COLORS";
 import TypeBadge from "../TypeBadge";
 import { PokemonSet } from "../../Constants/PokemonInterface";
 
+interface PokemonSetDetailsProps {
+  set: PokemonSet;
+  onEdit?: (set: PokemonSet) => void;
+  onDelete?: (set: PokemonSet) => void;
+}
 
-export default function PokemonSetDetails( { set }: { set: PokemonSet }) {
+export default function PokemonSetDetails({ set, onEdit, onDelete }: PokemonSetDetailsProps) {
       const c = TYPE_COLORS[set.pokemon.types[1]] ?? TYPE_COLORS.normal;
 
     return (

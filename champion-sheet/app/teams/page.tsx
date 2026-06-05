@@ -33,21 +33,6 @@ function calcStat(base: number, ev: number, iv: number, nature: number, isHp: bo
   return Math.floor((Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5) * nature);
 }
 
-// ── Micro-components ───────────────────────────────────────────────────────
-
-function StatBar({ stat, value, max = 255 }: { stat: number; value: number; max?: number }) {
-  const pct = Math.round((value / max) * 100);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <span style={{ fontFamily: "'Courier New', monospace", fontSize: 9, color: STAT_COLORS[stat], width: 30, fontWeight: 700, letterSpacing: "0.05em" }}>{STAT_LABELS[stat]}</span>
-      <span style={{ fontFamily: "'Courier New', monospace", fontSize: 9, color: "#8888bb", width: 28, textAlign: "right" }}>{value}</span>
-      <div style={{ flex: 1, height: 4, background: "#0d0d1a", borderRadius: 2, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: STAT_COLORS[stat], borderRadius: 2, opacity: 0.85 }} />
-      </div>
-    </div>
-  );
-}
-
 
 // ── Empty Slot ─────────────────────────────────────────────────────────────
 
@@ -164,7 +149,7 @@ export default function TeamsPage() {
       <header style={{ padding: "14px 16px 10px", borderBottom: "1px solid #1e1e3a", display: "flex", alignItems: "center", gap: 10, background: "rgba(10,10,25,0.7)", backdropFilter: "blur(4px)" }}>
         <button onClick={() => handleBack()} style={{ background: "none", border: "none", color: "#6666aa", cursor: "pointer", padding: "2px 6px 2px 0", fontFamily: "'Courier New', monospace", fontSize: 18, lineHeight: 1 }} aria-label="Back">←</button>
         <div>
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: "#ffe066", textShadow: "0 2px 0 #7a5a00", lineHeight: 1 }}>My Teams</h1>
+          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: "#ffe066", lineHeight: 1 }}>My Teams</h1>
           <p style={{ margin: 0, fontSize: 9, color: "#44445a", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 2 }}>{teams.length} teams · {sets.length} sets</p>
         </div>
         <div style={{ marginLeft: "auto", opacity: 0.4 }}><PokeBall/></div>
@@ -309,7 +294,7 @@ export default function TeamsPage() {
               <>
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <div style={{ fontFamily: "'Courier New', monospace", fontSize: 15, fontWeight: 900, color: "#ffe066", letterSpacing: "0.12em", textTransform: "uppercase", textShadow: "0 2px 0 #7a5a00" }}>{selectedTeam.name}</div>
+                    <div style={{ fontFamily: "'Courier New', monospace", fontSize: 15, fontWeight: 900, color: "#ffe066", letterSpacing: "0.12em", textTransform: "uppercase"}}>{selectedTeam.name}</div>
                     <span style={{ fontFamily: "'Courier New', monospace", fontSize: 9, color: "#4a9eda", background: "#0a1a3a", border: "1px solid #1a2a4a", borderRadius: 3, padding: "1px 6px", letterSpacing: "0.06em" }}>{selectedTeam.format}</span>
                   </div>
                   <div style={{ fontFamily: "'Courier New', monospace", fontSize: 9, color: "#33334a", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 1 }}>
@@ -340,7 +325,7 @@ export default function TeamsPage() {
           ) : (
             <>
               <div style={{ marginBottom: 10 }}>
-                <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, fontWeight: 900, color: "#ffe066", letterSpacing: "0.12em", textTransform: "uppercase", textShadow: "0 2px 0 #7a5a00" }}>
+                <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, fontWeight: 900, color: "#ffe066", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                   All Sets <span style={{ fontFamily: "'Courier New', monospace", fontSize: 9, color: "#44445a", fontWeight: 400, marginLeft: 8 }}>{filteredSets.length} result{filteredSets.length !== 1 ? "s" : ""}</span>
                 </div>
                 <div style={{ marginTop: 6, height: 1, background: "linear-gradient(to right, #ffe06644, transparent)" }} />
